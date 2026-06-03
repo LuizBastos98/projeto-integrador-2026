@@ -5,13 +5,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
-public class GlobalException extends ResponseEntityExceptionHandler {
+public class GlobalException { // <-- Removido o "extends ResponseEntityExceptionHandler"
 
     // Responsável por capturar erros das Regras de Negócio e retornar os "throw new RuntimeException"
     @ExceptionHandler(RuntimeException.class)
@@ -36,5 +35,4 @@ public class GlobalException extends ResponseEntityExceptionHandler {
         });
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
-
 }
