@@ -32,6 +32,13 @@ export function Login() {
 
         } catch (err: any) {
             console.error(err);
+
+            // Verifica se NÃO houve resposta do servidor (Erro de rede / CORS / Offline)
+            if (!err.response) {
+                setErro('Não foi possível conectar ao servidor. Verifique sua conexão ou a VPN.');
+                return;
+            }
+
             // Agora a tela de Login lê a fofoca exata que o Spring Boot mandar!
             const erroDoJava = err.response?.data;
 
