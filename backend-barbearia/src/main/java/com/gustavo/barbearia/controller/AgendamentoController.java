@@ -20,24 +20,24 @@ public class AgendamentoController {
         this.agendamentoService = agendamentoService;
     }
 
-    // Nota: Certifique-se de que o seu Service possui esses métodos.
-    // Caso tenham nomes diferentes, ajuste aqui no Controller.
-
     @GetMapping
     public ResponseEntity<List<AgendamentoResponseDTO>> listar() {
-        // Supondo que seu service tenha um método listarTodos()
         return ResponseEntity.ok(agendamentoService.listarTodos());
+    }
+
+    // Endpoint EXCLUSIVO para o portal do Cliente (Histórico individual)
+    @GetMapping("/cliente/{clienteId}")
+    public ResponseEntity<List<AgendamentoResponseDTO>> listarMeusAgendamentos(@PathVariable Long clienteId) {
+        return ResponseEntity.ok(agendamentoService.listarMeusAgendamentos(clienteId));
     }
 
     @PostMapping
     public ResponseEntity<AgendamentoResponseDTO> criar(@RequestBody @Valid AgendamentoRequestDTO dto) {
-        // Supondo que seu service tenha um método salvar(dto)
         return ResponseEntity.ok(agendamentoService.salvar(dto));
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<AgendamentoResponseDTO> atualizarStatus(@PathVariable Long id, @RequestParam StatusServico status) {
-        // Supondo que seu service tenha um método atualizarStatus(id, status)
         return ResponseEntity.ok(agendamentoService.atualizarStatus(id, status));
     }
 }

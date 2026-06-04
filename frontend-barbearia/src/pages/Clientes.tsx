@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import iconeUsuario from '../assets/usuario-preto.svg';
 
 // 1. Adicionamos o campo 'ativo' para o React saber o status
 export interface UsuarioDTO {
@@ -130,19 +131,29 @@ export function Clientes() {
     };
 
     return (
-        <div className="w-full max-w-6xl bg-white dark:bg-gray-800 p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 transition-colors duration-300 relative">
+        <div className="w-full max-w-6xl mx-auto bg-white dark:bg-gray-800 p-6 md:p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 transition-colors duration-300 relative">
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                        👥 Clientes & Equipe
-                    </h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-1">Gerencie os cadastros, acessos e status do sistema</p>
+
+                {/* 👇 Ícone e Títulos agrupados na mesma linha, agora com SVG */}
+                <div className="flex items-center gap-4">
+                    <img
+                        src={iconeUsuario}
+                        alt="Ícone de Usuário"
+                        className="w-12 h-12 dark:invert"
+                    />
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                            Clientes & Equipe
+                        </h1>
+                        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm md:text-base">Gerencie os cadastros, acessos e status do sistema</p>
+                    </div>
                 </div>
+
                 <div className="flex flex-wrap gap-3 w-full md:w-auto">
                     <button
                         onClick={handleNovoCadastro}
-                        className="flex-1 md:flex-none px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 font-medium rounded-lg transition-colors shadow-sm"
+                        className="flex-1 md:flex-none px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 font-medium rounded-lg transition-colors shadow-sm whitespace-nowrap"
                     >
                         + Novo Cadastro
                     </button>
@@ -231,24 +242,24 @@ export function Clientes() {
                             <div className="flex gap-4 flex-col sm:flex-row">
                                 <div className="flex-1">
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome Completo</label>
-                                    <input required type="text" value={novoUsuario.nome} onChange={e => setNovoUsuario({...novoUsuario, nome: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                    <input required type="text" value={novoUsuario.nome} onChange={e => setNovoUsuario({...novoUsuario, nome: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
                                 </div>
                                 <div className="flex-1">
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone</label>
-                                    <input required type="text" value={novoUsuario.telefone} onChange={e => setNovoUsuario({...novoUsuario, telefone: e.target.value.replace(/\D/g, '').slice(0, 11)})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="Ex: 62900000000" />
+                                    <input required type="text" value={novoUsuario.telefone} onChange={e => setNovoUsuario({...novoUsuario, telefone: e.target.value.replace(/\D/g, '').slice(0, 11)})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: 62900000000" />
                                 </div>
                             </div>
 
                             <div className="flex gap-4 flex-col sm:flex-row">
                                 <div className="flex-1">
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
-                                    <input required type="email" value={novoUsuario.email} onChange={e => setNovoUsuario({...novoUsuario, email: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                    <input required type="email" value={novoUsuario.email} onChange={e => setNovoUsuario({...novoUsuario, email: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
                                 </div>
                                 <div className="flex-1">
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         Senha {usuarioEditandoId && <span className="text-gray-400 text-xs">(Confirme ou Redefina)</span>}
                                     </label>
-                                    <input required type="password" value={novoUsuario.senha} onChange={e => setNovoUsuario({...novoUsuario, senha: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                                    <input required type="password" value={novoUsuario.senha} onChange={e => setNovoUsuario({...novoUsuario, senha: e.target.value})} className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
                                 </div>
                             </div>
 
@@ -257,7 +268,7 @@ export function Clientes() {
                                 <select
                                     value={novoUsuario.tipoUsuario}
                                     onChange={e => setNovoUsuario({...novoUsuario, tipoUsuario: e.target.value})}
-                                    className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    className="w-full p-2 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value="CLIENTE">Cliente (Apenas marca horários)</option>
                                     <option value="BARBEIRO">Barbeiro (Acessa serviços e agenda)</option>
@@ -265,7 +276,7 @@ export function Clientes() {
                                 </select>
                             </div>
 
-                            <div className="flex justify-end gap-3 mt-4">
+                            <div className="flex justify-end gap-3 mt-4 pt-4 border-t dark:border-gray-700">
                                 <button type="button" onClick={() => setModalAberto(false)} className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors">Cancelar</button>
                                 <button type="submit" className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors shadow-sm">
                                     {usuarioEditandoId ? 'Atualizar' : 'Salvar Cadastro'}

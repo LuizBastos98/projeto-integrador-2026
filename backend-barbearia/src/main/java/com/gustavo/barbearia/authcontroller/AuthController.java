@@ -32,8 +32,7 @@ public class AuthController {
         Usuario usuarioLogado = usuarioRepository.findByEmail(dto.email())
                 .orElseThrow(() -> new RuntimeException("E-mail ou senha incorretos."));
 
-        // 2. A NOSSA NOVA REGRA DE SEGURANÇA AQUI 👇
-        // (Nota: se o Java não reconhecer 'isAtivo()', mude para 'getAtivo()')
+        // 2. A NOSSA REGRA DE SEGURANÇA AQUI 👇
         if (!usuarioLogado.isAtivo()) {
             throw new RuntimeException("Acesso Negado: Este usuário foi desativado pela administração.");
         }
@@ -46,7 +45,12 @@ public class AuthController {
         // 4. Gera o crachá (Token)
         String token = jwtService.gerarToken(dto.email());
 
-        // 5. Devolve os dados para o Front-End
-        return new LoginResponseDTO(token, usuarioLogado.getNome(), usuarioLogado.getTipoUsuario());
+        // 5. Devolve os dados para o Front-End (Apenas 1 return correto, com o ID)
+        return new LoginResponseDTO(
+                token,
+                usuarioLogado.getId(),
+                usuarioLogado.getNome(),
+                usuarioLogado.getTipoUsuario()
+        );
     }
 }

@@ -33,20 +33,24 @@ public class AgendamentoService {
                 .toList();
     }
 
+    // 👇 O MÉTODO QUE ESTAVA FALTANDO! (Histórico do Cliente)
+    public List<AgendamentoResponseDTO> listarMeusAgendamentos(Long clienteId) {
+        return agendamentoRepository.findByClienteIdOrderByHoraInicialDesc(clienteId)
+                .stream()
+                .map(AgendamentoResponseDTO::new)
+                .toList();
+    }
+
     public AgendamentoResponseDTO salvar(AgendamentoRequestDTO dto) {
         Agendamento agendamento = new Agendamento();
 
-        // 1. Define a hora de início que veio do Front-End
         agendamento.setHoraInicial(dto.horaInicial());
 
-        // 2. Busca o Serviço no banco para saber quanto tempo ele demora
         Servico servico = servicoRepository.findById(dto.servicoId())
                 .orElseThrow(() -> new RuntimeException("Serviço não encontrado."));
 
-        // 3. MÁGICA: O Java calcula a hora final sozinho somando os minutos!
         agendamento.setHoraFinal(dto.horaInicial().plusMinutes(servico.getTempoDuracao()));
 
-        // 4. Conecta as outras Entidades
         agendamento.setCliente(usuarioRepository.findById(dto.clienteId())
                 .orElseThrow(() -> new RuntimeException("Cliente não encontrado.")));
 
@@ -56,7 +60,6 @@ public class AgendamentoService {
         agendamento.setServico(servico);
         agendamento.setStatusServico(StatusServico.PENDENTE);
 
-        // 5. Salva no banco e devolve o DTO bonitinho
         agendamento = agendamentoRepository.save(agendamento);
         return new AgendamentoResponseDTO(agendamento);
     }

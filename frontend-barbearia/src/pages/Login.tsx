@@ -25,6 +25,7 @@ export function Login() {
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('nomeUsuario', response.data.nome);
             localStorage.setItem('tipoUsuario', response.data.tipoUsuario);
+            localStorage.setItem('usuarioId', response.data.id);
 
             // Abre as portas e vai para o Painel!
             navigate('/dashboard');
