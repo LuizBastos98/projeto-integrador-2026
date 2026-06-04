@@ -64,11 +64,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOriginPatterns(List.of("*"));
+        // 🔒 Lista explícita de origens permitidas no Tailscale
+        config.setAllowedOrigins(List.of(
+                "http://localhost:5173",          // Seu uso local
+                "http://100.113.122.79:5173",     // Seu acesso via celular/Tailscale
+                "http://100.113.122.78:5173"      // 👈 NOVO: O IP do seu amigo
+        ));
 
-        // 👇 OLHA O PATCH AQUI ADICIONADO NA SUA LISTA ORIGINAL!
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
