@@ -19,3 +19,18 @@ api.interceptors.request.use(
         return Promise.reject(error);
     }
 );
+// Interceptor de RESPOSTA para lidar com Tokens Expirados
+api.interceptors.response.use(
+    (response) => {
+        return response;
+    },
+    (error) => {
+        // Se o erro for 403 (Proibido) ou 401 (Não Autorizado)
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            console.log("Token expirado ou inválido. Deslogando...");
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
+        return Promise.reject(error);
+    }
+);

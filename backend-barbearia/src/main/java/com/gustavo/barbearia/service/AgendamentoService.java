@@ -4,106 +4,70 @@ import com.gustavo.barbearia.dtos.AgendamentoRequestDTO;
 import com.gustavo.barbearia.dtos.AgendamentoResponseDTO;
 import com.gustavo.barbearia.entity.Agendamento;
 import com.gustavo.barbearia.entity.Servico;
-import com.gustavo.barbearia.entity.Usuario;
 import com.gustavo.barbearia.enums.StatusServico;
 import com.gustavo.barbearia.repository.AgendamentoRepository;
 import com.gustavo.barbearia.repository.ServicoRepository;
 import com.gustavo.barbearia.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class AgendamentoService {
 
-    @Autowired
-    private AgendamentoRepository agendamentoRepository;
+    private final AgendamentoRepository agendamentoRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final ServicoRepository servicoRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private ServicoRepository servicoRepository;
-
-    public AgendamentoResponseDTO criar(AgendamentoRequestDTO dto) {
-        Usuario cliente = usuarioRepository.findById(dto.clienteId())
-                .orElseThrow(() -> new RuntimeException("Cliente não encontrado."));
-        Usuario barbeiro = usuarioRepository.findById(dto.barbeiroId())
-                .orElseThrow(() -> new RuntimeException("Barbeiro não encontrado."));
-        Servico servico = servicoRepository.findById(dto.servicoId())
-                .orElseThrow(() -> new RuntimeException("Serviço não encontrado."));
-
-        LocalDateTime horaInicial = dto.horaInicial();
-        LocalDateTime horaFinal = horaInicial.plusMinutes(servico.getTempoDuracao());
-
-        boolean existeConflito = agendamentoRepository.existsConflitoHorario(
-                dto.barbeiroId(),
-                horaInicial,
-                horaFinal
-        );
-
-        if (existeConflito) {
-            throw new RuntimeException("O barbeiro já possui agendamento nessa data/horário.");
-        }
-
-        Agendamento agendamento = new Agendamento();
-        dtoParaEntity(agendamento, cliente, barbeiro, servico, horaInicial, horaFinal);
-        agendamento.setStatusServico(StatusServico.PENDENTE);
-        return entityParaDto(agendamentoRepository.save(agendamento));
+    public AgendamentoService(AgendamentoRepository agendamentoRepository,
+                              UsuarioRepository usuarioRepository,
+                              ServicoRepository servicoRepository) {
+        this.agendamentoRepository = agendamentoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.servicoRepository = servicoRepository;
     }
 
-    public List<AgendamentoResponseDTO> listar() {
-        return agendamentoRepository.findAll()
-                .stream()
-                .map(this::entityParaDto)
+    public List<AgendamentoResponseDTO> listarTodos() {
+        return agendamentoRepository.findAll().stream()
+                .map(AgendamentoResponseDTO::new)
                 .toList();
     }
 
-    // Na nossa lógica não faz tanto sentido um agendamento ser alterado, é melhor cancelar e criar um novo
-    // Esse metodo só tem a função de alterar o Status do Agendamento
-    // Ou seja, ele só vai alterar o Enum de Status do Agendamento
-    // Para que o Barbeiro possa cancelar um Agendamento que não seja possível executar
-    // Ou até mesmo marcar como finalizado um agendamento no sistema
-    public AgendamentoResponseDTO atualizarStatus(Long id, StatusServico novoStatus) {
-        Agendamento agendamento = agendamentoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado."));
-        agendamento.setStatusServico(novoStatus);
-        return entityParaDto(agendamentoRepository.save(agendamento));
-    }
+    public AgendamentoResponseDTO salvar(AgendamentoRequestDTO dto) {
+        Agendamento agendamento = new Agendamento();
 
-    public AgendamentoResponseDTO buscarPorId(Long id) {
-        Agendamento agendamento = agendamentoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado."));
-        return entityParaDto(agendamento);
-    }
+        // 1. Define a hora de início que veio do Front-End
+        agendamento.setHoraInicial(dto.horaInicial());
 
-    public void cancelar(Long id) {
-        Agendamento agendamento = agendamentoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado."));
+        // 2. Busca o Serviço no banco para saber quanto tempo ele demora
+        Servico servico = servicoRepository.findById(dto.servicoId())
+                .orElseThrow(() -> new RuntimeException("Serviço não encontrado."));
 
-        agendamento.setStatusServico(StatusServico.CANCELADO);
-        agendamentoRepository.save(agendamento);
-    }
+        // 3. MÁGICA: O Java calcula a hora final sozinho somando os minutos!
+        agendamento.setHoraFinal(dto.horaInicial().plusMinutes(servico.getTempoDuracao()));
 
-    private void dtoParaEntity(Agendamento agendamento, Usuario cliente, Usuario barbeiro, Servico servico, LocalDateTime horaInicial, LocalDateTime horaFinal) {
-        agendamento.setCliente(cliente);
-        agendamento.setBarbeiro(barbeiro);
+        // 4. Conecta as outras Entidades
+        agendamento.setCliente(usuarioRepository.findById(dto.clienteId())
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado.")));
+
+        agendamento.setBarbeiro(usuarioRepository.findById(dto.barbeiroId())
+                .orElseThrow(() -> new RuntimeException("Barbeiro não encontrado.")));
+
         agendamento.setServico(servico);
-        agendamento.setHoraInicial(horaInicial);
-        agendamento.setHoraFinal(horaFinal);
+        agendamento.setStatusServico(StatusServico.PENDENTE);
+
+        // 5. Salva no banco e devolve o DTO bonitinho
+        agendamento = agendamentoRepository.save(agendamento);
+        return new AgendamentoResponseDTO(agendamento);
     }
 
-    private AgendamentoResponseDTO entityParaDto(Agendamento agendamento) {
-        return new AgendamentoResponseDTO(
-                agendamento.getId(),
-                agendamento.getCliente().getNome(),
-                agendamento.getBarbeiro().getNome(),
-                agendamento.getServico().getNome(),
-                agendamento.getHoraInicial(),
-                agendamento.getHoraFinal(),
-                agendamento.getStatusServico()
-        );
+    public AgendamentoResponseDTO atualizarStatus(Long id, StatusServico status) {
+        Agendamento agendamento = agendamentoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado."));
+
+        agendamento.setStatusServico(status);
+        agendamento = agendamentoRepository.save(agendamento);
+
+        return new AgendamentoResponseDTO(agendamento);
     }
 }

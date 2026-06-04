@@ -1,95 +1,99 @@
-import { useState, FormEvent } from 'react';
-import { LoginResponse } from '../types/Auth';
-import { api } from '../services/api';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
 
 export function Login() {
     const navigate = useNavigate();
-    const [email, setEmail] = useState<string>('');
-    const [senha, setSenha] = useState<string>('');
 
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
+    // 1. Estados para guardar o que o usuário digita
+    const [email, setEmail] = useState('');
+    const [senha, setSenha] = useState('');
+    const [erro, setErro] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError(null);
-
-        const dadosLogin = { email, senha };
+    // 2. A nossa função real de Login
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault(); // Evita que a página recarregue
+        setErro('');
+        setLoading(true);
 
         try {
+            // Bate na porta do Spring Boot
+            const response = await api.post('/auth/login', { email, senha });
 
-            const response = await api.post<LoginResponse>('/auth/login', dadosLogin);
-            localStorage.setItem("token", response.data.token);
+            // Guarda os dados VIP no navegador
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('nomeUsuario', response.data.nome);
+            localStorage.setItem('tipoUsuario', response.data.tipoUsuario);
 
-
+            // Abre as portas e vai para o Painel!
             navigate('/dashboard');
 
-
-            localStorage.setItem("token", response.data.token);
-            alert("Login realizado com sucesso! Token guardado.");
-
         } catch (err: any) {
-            console.error("Erro na requisição:", err);
-            // O Axios nos permite tratar os erros HTTP com mais precisão
-            if (err.response && err.response.status === 403) {
-                setError("Credenciais inválidas. Verifique o seu e-mail e senha.");
+            console.error(err);
+            // Agora a tela de Login lê a fofoca exata que o Spring Boot mandar!
+            const erroDoJava = err.response?.data;
+
+            if (typeof erroDoJava === 'string') {
+                setErro(erroDoJava); // Exibe: "Acesso Negado: Este usuário foi desativado..."
             } else {
-                setError("Não foi possível conectar ao servidor. O back-end está rodando?");
+                setErro('E-mail ou senha incorretos. Tente novamente.');
             }
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
     return (
-        <div className="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+        <div className="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+
             <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Barbearia do João</h2>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">Faça login para acessar o sistema</p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">💈 Barbearia</h1>
+                <p className="text-gray-500 dark:text-gray-400">Faça login para acessar o sistema</p>
             </div>
 
-            {error && (
-                <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-400 text-sm rounded">
-                    {error}
+            {/* Aviso de erro (se houver) */}
+            {erro && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 text-sm text-center">
+                    {erro}
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            {/* 3. O nosso formulário conectado à função handleLogin */}
+            <form onSubmit={handleLogin} className="flex flex-col gap-5">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 text-left">E-mail</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
                     <input
+                        required
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={isLoading}
-                        className="w-full px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                        onChange={e => setEmail(e.target.value)}
+                        className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
                         placeholder="seu@email.com"
                     />
                 </div>
+
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 text-left">Senha</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha</label>
                     <input
+                        required
                         type="password"
                         value={senha}
-                        onChange={(e) => setSenha(e.target.value)}
-                        required
-                        disabled={isLoading}
-                        className="w-full px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                        onChange={e => setSenha(e.target.value)}
+                        className="w-full p-3 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
                         placeholder="••••••••"
                     />
                 </div>
+
                 <button
                     type="submit"
-                    disabled={isLoading}
-                    className={`w-full py-3 px-4 text-white font-semibold rounded-lg transition-all mt-2 
-                        ${isLoading ? 'bg-blue-400 dark:bg-blue-500/50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 shadow-md hover:shadow-lg'}`}
+                    disabled={loading}
+                    className="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg disabled:opacity-70 flex justify-center items-center"
                 >
-                    {isLoading ? 'A entrar...' : 'Entrar'}
+                    {loading ? 'Verificando...' : 'Entrar no Sistema'}
                 </button>
             </form>
+
         </div>
     );
 }

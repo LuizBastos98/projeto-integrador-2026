@@ -1,15 +1,27 @@
 package com.gustavo.barbearia.dtos;
 
 import com.gustavo.barbearia.enums.StatusServico;
-
 import java.time.LocalDateTime;
+import com.gustavo.barbearia.entity.Agendamento;
 
 public record AgendamentoResponseDTO(
         Long id,
-        String nomeCliente,
-        String nomeBarbeiro,
-        String nomeServico,
         LocalDateTime horaInicial,
         LocalDateTime horaFinal,
-        StatusServico status
-) {}
+        String clienteNome,
+        String barbeiroNome,
+        String servicoNome,
+        StatusServico statusServico
+) {
+    public AgendamentoResponseDTO(Agendamento agendamento) {
+        this(
+                agendamento.getId(),
+                agendamento.getHoraInicial(),
+                agendamento.getHoraFinal(),
+                agendamento.getCliente().getNome(),
+                agendamento.getBarbeiro().getNome(),
+                agendamento.getServico().getNome(),
+                agendamento.getStatusServico()
+        );
+    }
+}

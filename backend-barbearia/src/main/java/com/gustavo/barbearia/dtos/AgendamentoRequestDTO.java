@@ -1,20 +1,23 @@
 package com.gustavo.barbearia.dtos;
 
 import jakarta.validation.constraints.NotNull;
-
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record AgendamentoRequestDTO(
+        @JsonProperty("horaInicial")
+        @NotNull(message = "A hora inicial é obrigatória.")
+        LocalDateTime horaInicial,
 
-        @NotNull(message = "Cliente é um capo obrigatório.")
+        @JsonProperty("clienteId")
+        @NotNull(message = "Cliente é obrigatório.")
         Long clienteId,
 
-        @NotNull(message = "Barbeiro é um capo obrigatório.")
+        @JsonProperty("barbeiroId")
+        @NotNull(message = "Barbeiro é obrigatório.")
         Long barbeiroId,
 
-        @NotNull(message = "Serviço é um capo obrigatório.")
-        Long servicoId,
-
-        @NotNull(message = "Hora inicial é um capo obrigatório.")
-        LocalDateTime horaInicial
+        @JsonProperty("servicoId")
+        @NotNull(message = "Serviço é obrigatório.")
+        Long servicoId
 ) {}

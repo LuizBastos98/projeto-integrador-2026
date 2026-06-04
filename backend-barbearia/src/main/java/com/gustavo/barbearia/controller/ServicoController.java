@@ -1,53 +1,73 @@
 package com.gustavo.barbearia.controller;
 
-import com.gustavo.barbearia.dtos.ServicoRequestDTO;
-import com.gustavo.barbearia.dtos.ServicoResponseDTO;
-import com.gustavo.barbearia.service.ServicoService;
-import jakarta.validation.Valid;
+import com.gustavo.barbearia.entity.Servico;
+import com.gustavo.barbearia.repository.ServicoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/servicos")
+// @CrossOrigin(origins = "http://localhost:5173") // Descomente caso não tenha um WebMvcConfigurer global para o Vite
 public class ServicoController {
 
     @Autowired
-    private ServicoService servicoService;
+    private ServicoRepository repository;
 
-    @PostMapping
-    public ResponseEntity<ServicoResponseDTO> criar(@Valid @RequestBody ServicoRequestDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(servicoService.criar(dto));
-    }
-
+    // 🟢 LISTAR: Retorna todos os serviços direto do banco (Sem filtro de inativos)
     @GetMapping
-    public ResponseEntity<List<ServicoResponseDTO>> listar() {
-        return ResponseEntity.ok(servicoService.listar());
+    public ResponseEntity<List<Servico>> listar() {
+        List<Servico> servicos = repository.findAll();
+        return ResponseEntity.ok(servicos);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ServicoResponseDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(servicoService.buscarPorId(id));
+    // 🔵 CRIAR: Cadastra um novo serviço
+    @PostMapping
+    @Transactional
+    public ResponseEntity<Servico> criar(@RequestBody Servico servico) {
+        Servico servicoSalvo = repository.save(servico);
+        return ResponseEntity.status(HttpStatus.CREATED).body(servicoSalvo);
     }
 
+    // 🟠 ATUALIZAR: Edita um serviço existente
     @PutMapping("/{id}")
-    public ResponseEntity<ServicoResponseDTO> atualizar(@PathVariable Long id, @Valid @RequestBody ServicoRequestDTO dto) {
-        return ResponseEntity.ok(servicoService.atualizar(id, dto));
+    @Transactional
+    public ResponseEntity<Servico> atualizar(@PathVariable Long id, @RequestBody Servico dadosAtualizados) {
+        Optional<Servico> servicoOptional = repository.findById(id);
+
+        if (servicoOptional.isEmpty()) {
+            return ResponseEntity.notFound().build(); // Retorna 404 se não achar
+        }
+
+        Servico servico = servicoOptional.get();
+
+        // Atualiza apenas os dados permitidos
+        servico.setNome(dadosAtualizados.getNome());
+        servico.setDescricao(dadosAtualizados.getDescricao());
+        servico.setTempoDuracao(dadosAtualizados.getTempoDuracao());
+        servico.setPreco(dadosAtualizados.getPreco());
+
+        // Retorna o objeto atualizado
+        return ResponseEntity.ok(repository.save(servico));
     }
 
+    // 🔴 EXCLUIR: Realiza a Exclusão Física (Deleta de vez do banco)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> desativar(@PathVariable Long id) {
-        servicoService.desativar(id);
-        return ResponseEntity.noContent().build();
-    }
+    @Transactional
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        // Verifica se o serviço existe antes de tentar deletar
+        if (!repository.existsById(id)) {
+            return ResponseEntity.notFound().build(); // Retorna 404 se não achar
+        }
 
-    @PatchMapping("/{id}/ativar")
-    public ResponseEntity<Void> ativar(@PathVariable Long id) {
-        servicoService.ativar(id);
-        return ResponseEntity.noContent().build();
-    }
+        // Dispara o comando DELETE no banco de dados
+        repository.deleteById(id);
 
+        return ResponseEntity.noContent().build(); // Retorna 204 indicando sucesso sem corpo
+    }
 }

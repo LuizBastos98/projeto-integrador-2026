@@ -19,12 +19,6 @@ public class DataInitializer implements CommandLineRunner {
         this.passwordEncoder = passwordEncoder;
     }
 
-    /*
-    O sistema cria automáticamente um usuário padrão de nível administrador
-    Essa prática no mercado se chama Seeding / Bootstrap de Dados Iniciais
-    É necessário para que o usuário consiga logar pela primeira vez e gerenciar o sistema
-    */
-
     @Override
     public void run(String... args) {
 
@@ -33,17 +27,22 @@ public class DataInitializer implements CommandLineRunner {
                 .isPresent();
 
         if (!existeAdmin) {
-            Usuario admin = new Usuario();
-            admin.setNome("Administrador");
-            admin.setEmail("administrador@barbearia.com");
-            admin.setSenha(passwordEncoder.encode("administrador"));
-            admin.setTelefone("62994128475");
-            admin.setTipoUsuario(TipoUsuario.ADMINISTRADOR);
-            admin.setAtivo(true);
+            try {
+                Usuario admin = new Usuario();
+                admin.setNome("Administrador");
+                admin.setEmail("administrador@barbearia.com");
+                admin.setSenha(passwordEncoder.encode("administrador"));
+                admin.setTelefone("62994128475");
+                admin.setTipoUsuario(TipoUsuario.ADMINISTRADOR);
+                admin.setAtivo(true);
 
-            usuarioRepository.save(admin);
+                usuarioRepository.save(admin);
+                System.out.println("Usuário do tipo ->Administrador<- criado com sucesso!");
 
-            System.out.println("Usuário do tipo ->Administrador<- criado com sucesso!");
+            } catch (Exception e) {
+                // Se der erro de telefone duplicado, ele cai aqui, ignora e deixa o Java ligar em paz!
+                System.out.println("Aviso: Admin padrão não recriado. O telefone ou e-mail já está sendo usado por outro cadastro.");
+            }
         }
     }
 }
