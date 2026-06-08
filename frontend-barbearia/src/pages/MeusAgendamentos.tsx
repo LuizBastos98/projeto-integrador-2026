@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import iconeCalendario from '../assets/calendario.svg';
 
 // Reaproveitando as Interfaces do DTO
 export interface AgendamentoResponseDTO {
@@ -103,7 +104,7 @@ export function MeusAgendamentos() {
         <div className="max-w-6xl mx-auto p-4 md:p-8">
             <div className="flex justify-between items-center mb-8 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Olá, {nomeCliente?.split(' ')[0]} 👋</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Olá, {nomeCliente?.split(' ')[0]}! </h1>
                     <p className="text-gray-500">Bem-vindo ao seu portal exclusivo de agendamentos.</p>
                 </div>
                 <button onClick={() => { localStorage.clear(); navigate('/'); }} className="text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors font-medium">Sair</button>
@@ -113,7 +114,12 @@ export function MeusAgendamentos() {
 
                 {/* COLUNA ESQUERDA: Formulário de Agendamento */}
                 <div className="lg:col-span-1 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 h-fit">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">📅 Marcar Horário</h2>
+                    <img
+                        src={iconeCalendario}
+                        alt="Ícone de Calendário"
+                        className="w-8 h-8 mb-4 dark:brightness-0 dark:invert transition-all"
+                    />
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Marcar Horário</h2>
                     <form onSubmit={handleAgendar} className="flex flex-col gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Escolha a Data e Hora</label>
@@ -139,7 +145,7 @@ export function MeusAgendamentos() {
 
                 {/* COLUNA DIREITA: Histórico */}
                 <div className="lg:col-span-2">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">📖 Seu Histórico</h2>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6"> Seu Histórico</h2>
                     {loading ? (
                         <p className="animate-pulse text-gray-500">Buscando seus horários...</p>
                     ) : meusAgendamentos.length === 0 ? (

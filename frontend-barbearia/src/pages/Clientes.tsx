@@ -235,7 +235,7 @@ export function Clientes() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200">
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                            {usuarioEditandoId ? '✏️ Editar Usuário' : '✨ Novo Cadastro'}
+                            {usuarioEditandoId ? '✏️ Editar Usuário' : ' Novo Cadastro'}
                         </h2>
 
                         <form onSubmit={handleSalvar} className="flex flex-col gap-4">

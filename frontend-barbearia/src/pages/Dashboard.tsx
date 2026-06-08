@@ -51,15 +51,15 @@ export function Dashboard() {
             {/* Grid de Cartões */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 justify-center">
 
-                {/* 1. Cartão de Agendamentos (Livre para todos) */}
+                {/* 1. Cartão de Agendamentos (Redirecionamento Dinâmico) */}
                 <div
-                    onClick={() => navigate('/agendamentos')}
+                    // 👇 SE FOR CLIENTE, MANDA PARA O HISTÓRICO DELE. SE FOR ADM/BARBEIRO, MANDA PARA A TELA GERAL
+                    onClick={() => navigate(tipoUsuario === 'CLIENTE' ? '/meus-agendamentos' : '/agendamentos')}
                     className="cursor-pointer group p-6 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 rounded-xl border border-blue-100 dark:border-blue-800/30 transition-all duration-300 flex flex-col items-center text-center"
                 >
                     <img
                         src={iconeCalendario}
                         alt="Ícone de Calendário"
-                        // 👇 Truque aplicado aqui: brightness-0 invert
                         className="w-12 h-12 mb-4 dark:brightness-0 dark:invert transition-all"
                     />
                     <h2 className="text-xl font-bold text-blue-900 dark:text-blue-100 mb-2 group-hover:text-blue-700 dark:group-hover:text-blue-300">
@@ -79,7 +79,6 @@ export function Dashboard() {
                         <img
                             src={iconeTesoura}
                             alt="Ícone de Tesoura"
-                            // 👇 Truque aplicado aqui
                             className="w-12 h-12 mb-4 dark:brightness-0 dark:invert transition-all"
                         />
                         <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100 mb-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-300">
@@ -100,7 +99,6 @@ export function Dashboard() {
                         <img
                             src={iconeUsuario}
                             alt="Ícone de Usuário"
-                            // 👇 Truque aplicado aqui
                             className="w-12 h-12 mb-4 dark:brightness-0 dark:invert transition-all"
                         />
                         <h2 className="text-xl font-bold text-purple-900 dark:text-purple-100 mb-2 group-hover:text-purple-700 dark:group-hover:text-purple-300">
