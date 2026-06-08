@@ -23,7 +23,7 @@ export function Dashboard() {
     const handleLogout = () => {
         // Apaga o Token e os dados do usuário da memória do navegador
         localStorage.clear();
-        navigate('/'); // Redireciona para o Login
+        navigate('/');
     };
 
     return (
@@ -53,7 +53,7 @@ export function Dashboard() {
 
                 {/* 1. Cartão de Agendamentos (Redirecionamento Dinâmico) */}
                 <div
-                    // 👇 SE FOR CLIENTE, MANDA PARA O HISTÓRICO DELE. SE FOR ADM/BARBEIRO, MANDA PARA A TELA GERAL
+                    // SE FOR CLIENTE, MANDA PARA O HISTÓRICO DELE. SE FOR ADM/BARBEIRO, MANDA PARA A TELA GERAL
                     onClick={() => navigate(tipoUsuario === 'CLIENTE' ? '/meus-agendamentos' : '/agendamentos')}
                     className="cursor-pointer group p-6 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 rounded-xl border border-blue-100 dark:border-blue-800/30 transition-all duration-300 flex flex-col items-center text-center"
                 >

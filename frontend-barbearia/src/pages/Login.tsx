@@ -25,7 +25,7 @@ export function Login() {
 
         try {
             if (isCadastro) {
-                // 👇 LÓGICA DE CADASTRO
+                //  LÓGICA DE CADASTRO
                 await api.post('/usuarios', {
                     nome,
                     email,
@@ -42,7 +42,7 @@ export function Login() {
                 setNome('');
                 setTelefone('');
             } else {
-                // 👇 LÓGICA DE LOGIN
+                //  LÓGICA DE LOGIN
                 const response = await api.post('/auth/login', { email, senha });
 
                 localStorage.setItem('token', response.data.token);
@@ -168,7 +168,7 @@ export function Login() {
                 </button>
             </form>
 
-            {/* 👇 Botão de Alternância (Login <-> Cadastro) */}
+            {/*  Botão de Alternância (Login <-> Cadastro) */}
             <div className="mt-6 text-center border-t dark:border-gray-700 pt-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                     {isCadastro ? 'Já tem uma conta?' : 'Ainda não é cliente?'}

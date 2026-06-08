@@ -1,10 +1,7 @@
 import axios from 'axios';
 
-// 1. Descobre qual IP está na barra de endereços do navegador agora mesmo
 const hostAtual = window.location.hostname;
 
-// 2. A Mágica: Se for o IP do seu amigo (.78), o Axios mira na porta 8080 dele.
-// Se não for (seja você no .79 ou testando em localhost), mira no seu .79.
 const urlBackend = hostAtual === '100.113.122.78'
     ? 'http://100.113.122.78:8080'
     : 'http://100.113.122.79:8080';
