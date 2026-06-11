@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @ControllerAdvice
-public class GlobalException { // <-- Removido o "extends ResponseEntityExceptionHandler"
+public class GlobalException {
 
     // Responsável por capturar erros das Regras de Negócio e retornar os "throw new RuntimeException"
     @ExceptionHandler(RuntimeException.class)
@@ -24,7 +24,7 @@ public class GlobalException { // <-- Removido o "extends ResponseEntityExceptio
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno no servidor.");
     }
 
-    // Captura os erros de validação das classes de DTO (Em Branco, Tamanho, Email, etc) -> Erros de Validação
+    // Captura os erros de validação das classes de DTO (Em Branco, Tamanho, Email, etc)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> validationErrorHandler(MethodArgumentNotValidException exception) {
         Map<String, String> errors = new HashMap<>();

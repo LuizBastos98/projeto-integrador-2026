@@ -3,9 +3,9 @@ package com.gustavo.barbearia.authcontroller;
 import com.gustavo.barbearia.entity.Usuario;
 import com.gustavo.barbearia.repository.UsuarioRepository;
 import com.gustavo.barbearia.security.JwtService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,31 +26,36 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public LoginResponseDTO login(@RequestBody LoginRequestDTO dto) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDTO dto) {
+        try {
 
-        // 1. Busca o usuário no banco ANTES de testar a senha
-        Usuario usuarioLogado = usuarioRepository.findByEmail(dto.email())
-                .orElseThrow(() -> new RuntimeException("E-mail ou senha incorretos."));
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(dto.email(), dto.senha())
+            );
 
-        // 2. A NOSSA REGRA DE SEGURANÇA AQUI 👇
-        if (!usuarioLogado.isAtivo()) {
-            throw new RuntimeException("Acesso Negado: Este usuário foi desativado pela administração.");
+
+            Usuario usuarioLogado = usuarioRepository.findByEmail(dto.email())
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+
+
+            if (!usuarioLogado.isAtivo()) {
+                // Retorna erro 403 (Forbidden)
+                return ResponseEntity.status(403).body("Acesso Negado: Este usuário foi desativado pela administração.");
+            }
+
+            String token = jwtService.gerarToken(dto.email());
+
+
+            return ResponseEntity.ok(new LoginResponseDTO(
+                    token,
+                    usuarioLogado.getId(),
+                    usuarioLogado.getNome(),
+                    usuarioLogado.getTipoUsuario().name() // Garante que o Enum vira String
+            ));
+
+        } catch (Exception e) {
+            // Se a senha estiver errada, cai aqui e devolve erro 401 (Unauthorized)
+            return ResponseEntity.status(401).body("Email ou senha incorretos.");
         }
-
-        // 3. Confirma se a senha está correta
-        Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(dto.email(), dto.senha())
-        );
-
-        // 4. Gera o crachá (Token)
-        String token = jwtService.gerarToken(dto.email());
-
-        // 5. Devolve os dados para o Front-End (Apenas 1 return correto, com o ID)
-        return new LoginResponseDTO(
-                token,
-                usuarioLogado.getId(),
-                usuarioLogado.getNome(),
-                usuarioLogado.getTipoUsuario()
-        );
     }
 }

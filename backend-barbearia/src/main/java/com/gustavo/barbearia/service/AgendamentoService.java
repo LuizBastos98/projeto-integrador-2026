@@ -10,6 +10,7 @@ import com.gustavo.barbearia.repository.ServicoRepository;
 import com.gustavo.barbearia.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -33,7 +34,6 @@ public class AgendamentoService {
                 .toList();
     }
 
-    // 👇 O MÉTODO QUE ESTAVA FALTANDO! (Histórico do Cliente)
     public List<AgendamentoResponseDTO> listarMeusAgendamentos(Long clienteId) {
         return agendamentoRepository.findByClienteIdOrderByHoraInicialDesc(clienteId)
                 .stream()
@@ -43,14 +43,29 @@ public class AgendamentoService {
 
     public AgendamentoResponseDTO salvar(AgendamentoRequestDTO dto) {
         Agendamento agendamento = new Agendamento();
-
         agendamento.setHoraInicial(dto.horaInicial());
 
+        // 1. Puxa o serviço primeiro para saber quanto tempo o corte demora
         Servico servico = servicoRepository.findById(dto.servicoId())
                 .orElseThrow(() -> new RuntimeException("Serviço não encontrado."));
 
-        agendamento.setHoraFinal(dto.horaInicial().plusMinutes(servico.getTempoDuracao()));
+        // 2. Calcula exatamente que horas o corte termina
+        LocalDateTime horaFim = dto.horaInicial().plusMinutes(servico.getTempoDuracao());
+        agendamento.setHoraFinal(horaFim);
 
+        // 3. Validação de Conflito: Bate no banco para checar a disponibilidade do Barbeiro
+        boolean agendaOcupada = agendamentoRepository.existeConflitoDeHorario(
+                dto.barbeiroId(),
+                dto.horaInicial(),
+                horaFim
+        );
+
+        // 4. Se estiver ocupado, bloqueia a operação e avisa o Front-End
+        if (agendaOcupada) {
+            throw new RuntimeException("Este profissional já possui um agendamento nesse horário. Por favor, escolha outra hora.");
+        }
+
+        // 5. Se estiver livre, segue com o agendamento normal
         agendamento.setCliente(usuarioRepository.findById(dto.clienteId())
                 .orElseThrow(() -> new RuntimeException("Cliente não encontrado.")));
 

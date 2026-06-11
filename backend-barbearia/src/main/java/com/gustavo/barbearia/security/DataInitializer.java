@@ -40,7 +40,7 @@ public class DataInitializer implements CommandLineRunner {
                 System.out.println("Usuário do tipo ->Administrador<- criado com sucesso!");
 
             } catch (Exception e) {
-                // Se der erro de telefone duplicado, ele cai aqui, ignora e deixa o Java ligar em paz!
+
                 System.out.println("Aviso: Admin padrão não recriado. O telefone ou e-mail já está sendo usado por outro cadastro.");
             }
         }

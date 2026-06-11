@@ -41,12 +41,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         // Criar usuário liberado para todos -> (SOMENTE METODO POST)
                         .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
-                        // Endpoint Usuários (Somente Tag de ADMINISTRADOR)
+
+                        // 👇 A SOLUÇÃO: Liberando a LEITURA (GET) para os clientes preencherem o select do formulário
+                        .requestMatchers(HttpMethod.GET, "/usuarios").hasAnyRole("ADMINISTRADOR", "BARBEIRO", "CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/servicos").hasAnyRole("ADMINISTRADOR", "BARBEIRO", "CLIENTE")
+
+                        // Endpoint Usuários (EDIÇÃO/DELEÇÃO Somente Tag de ADMINISTRADOR)
                         .requestMatchers("/usuarios/**").hasRole("ADMINISTRADOR")
-                        // Endpoint Serviços (Somente Tag de ADMINISTRADOR e BARBEIRO)
+                        // Endpoint Serviços (EDIÇÃO/DELEÇÃO Somente Tag de ADMINISTRADOR e BARBEIRO)
                         .requestMatchers("/servicos/**").hasAnyRole("ADMINISTRADOR", "BARBEIRO")
+
                         // Endpoint Agendamento liberado para todas as Tags
                         .requestMatchers("/agendamentos/**").hasAnyRole("ADMINISTRADOR", "BARBEIRO", "CLIENTE")
+
                         // Permite acesso Swagger somente se estiver logado como Administrador
                         .requestMatchers(
                                 "/swagger-ui/**",
@@ -64,7 +71,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // 🔒 Lista explícita de origens permitidas no Tailscale
+        //  Lista explícita de origens permitidas no Tailscale
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",          // Seu uso local
                 "http://100.113.122.79:5173",     // Seu acesso via celular/Tailscale

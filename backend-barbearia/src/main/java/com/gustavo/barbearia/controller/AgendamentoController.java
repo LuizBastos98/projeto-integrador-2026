@@ -25,9 +25,8 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentoService.listarTodos());
     }
 
-    // Endpoint EXCLUSIVO para o portal do Cliente (Histórico individual)
     @GetMapping("/cliente/{clienteId}")
-    public ResponseEntity<List<AgendamentoResponseDTO>> listarMeusAgendamentos(@PathVariable Long clienteId) {
+    public ResponseEntity<List<AgendamentoResponseDTO>> listarMeusAgendamentos(@PathVariable("clienteId") Long clienteId) {
         return ResponseEntity.ok(agendamentoService.listarMeusAgendamentos(clienteId));
     }
 
@@ -37,7 +36,9 @@ public class AgendamentoController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<AgendamentoResponseDTO> atualizarStatus(@PathVariable Long id, @RequestParam StatusServico status) {
+    public ResponseEntity<AgendamentoResponseDTO> atualizarStatus(
+            @PathVariable("id") Long id,
+            @RequestParam("status") StatusServico status) {
         return ResponseEntity.ok(agendamentoService.atualizarStatus(id, status));
     }
 }

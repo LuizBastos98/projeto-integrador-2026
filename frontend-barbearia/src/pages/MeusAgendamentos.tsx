@@ -16,6 +16,17 @@ export interface AgendamentoResponseDTO {
 export interface UsuarioDTO { id: number; nome: string; tipoUsuario: string; ativo?: boolean; }
 export interface ServicoDTO { id: number; nome: string; preco: number; }
 
+// 👇 MÁGICA: Função que gera os horários de 30 em 30 min (Das 08:00 às 20:00)
+const gerarHorariosDisponiveis = () => {
+    const horarios = [];
+    for (let i = 8; i <= 20; i++) {
+        const hora = i.toString().padStart(2, '0');
+        horarios.push(`${hora}:00`);
+        horarios.push(`${hora}:30`);
+    }
+    return horarios;
+};
+
 export function MeusAgendamentos() {
     const navigate = useNavigate();
     const clienteId = localStorage.getItem('usuarioId');
@@ -26,7 +37,8 @@ export function MeusAgendamentos() {
     const [servicos, setServicos] = useState<ServicoDTO[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const [form, setForm] = useState({ horaInicial: '', barbeiroId: '', servicoId: '' });
+    // 👇 SEPARAMOS DATA E HORA AQUI NO ESTADO
+    const [form, setForm] = useState({ data: '', hora: '', barbeiroId: '', servicoId: '' });
 
     useEffect(() => {
         if (!clienteId) {
@@ -61,8 +73,11 @@ export function MeusAgendamentos() {
     const handleAgendar = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // 👇 Juntamos a Data e a Hora exata que o Spring Boot espera (YYYY-MM-DDTHH:mm:00)
+            const dataHoraCompleta = `${form.data}T${form.hora}:00`;
+
             const payload = {
-                horaInicial: form.horaInicial,
+                horaInicial: dataHoraCompleta,
                 clienteId: Number(clienteId), // O ID do cliente vai oculto, com base no login dele!
                 barbeiroId: Number(form.barbeiroId),
                 servicoId: Number(form.servicoId)
@@ -70,7 +85,7 @@ export function MeusAgendamentos() {
 
             await api.post('/agendamentos', payload);
             alert("✅ Horário marcado com sucesso!");
-            setForm({ horaInicial: '', barbeiroId: '', servicoId: '' });
+            setForm({ data: '', hora: '', barbeiroId: '', servicoId: '' }); // Limpa
             carregarDados(); // Recarrega o histórico
         } catch (err: any) {
             alert(`❌ Erro ao agendar:\n${err.response?.data || 'Verifique os dados'}`);
@@ -121,20 +136,41 @@ export function MeusAgendamentos() {
                     />
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Marcar Horário</h2>
                     <form onSubmit={handleAgendar} className="flex flex-col gap-4">
+
+                        {/* 👇 AQUI ESTÃO OS CAMPOS DE DATA E HORA SEPARADOS! */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Escolha a Data e Hora</label>
-                            <input required type="datetime-local" value={form.horaInicial} onChange={e => setForm({...form, horaInicial: e.target.value})} className="w-full p-2.5 border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500" />
+                            <div className="flex gap-2">
+                                <input
+                                    required
+                                    type="date"
+                                    min={new Date().toISOString().split('T')[0]} // Bloqueia passado
+                                    value={form.data}
+                                    onChange={e => setForm({...form, data: e.target.value})}
+                                    className="w-2/3 p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <select
+                                    required
+                                    value={form.hora}
+                                    onChange={e => setForm({...form, hora: e.target.value})}
+                                    className="w-1/3 p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="" disabled>Hora</option>
+                                    {gerarHorariosDisponiveis().map(h => <option key={h} value={h}>{h}</option>)}
+                                </select>
+                            </div>
                         </div>
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Profissional</label>
-                            <select required value={form.barbeiroId} onChange={e => setForm({...form, barbeiroId: e.target.value})} className="w-full p-2.5 border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500">
+                            <select required value={form.barbeiroId} onChange={e => setForm({...form, barbeiroId: e.target.value})} className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="" disabled>Quem vai te atender?</option>
                                 {barbeiros.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Serviço</label>
-                            <select required value={form.servicoId} onChange={e => setForm({...form, servicoId: e.target.value})} className="w-full p-2.5 border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-blue-500">
+                            <select required value={form.servicoId} onChange={e => setForm({...form, servicoId: e.target.value})} className="w-full p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="" disabled>O que vamos fazer hoje?</option>
                                 {servicos.map(s => <option key={s.id} value={s.id}>{s.nome} - R$ {s.preco.toFixed(2)}</option>)}
                             </select>

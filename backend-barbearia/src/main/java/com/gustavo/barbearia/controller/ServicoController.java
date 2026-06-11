@@ -56,7 +56,7 @@ public class ServicoController {
         return ResponseEntity.ok(repository.save(servico));
     }
 
-    // 🔴 EXCLUIR: Realiza a Exclusão Física (Deleta de vez do banco)
+
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
