@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import iconeCalendario from '../assets/calendario.svg';
 
-// Reaproveitando as Interfaces do DTO
 export interface AgendamentoResponseDTO {
     id: number;
     horaInicial: string;
@@ -16,17 +15,6 @@ export interface AgendamentoResponseDTO {
 export interface UsuarioDTO { id: number; nome: string; tipoUsuario: string; ativo?: boolean; }
 export interface ServicoDTO { id: number; nome: string; preco: number; }
 
-// 👇 MÁGICA: Função que gera os horários de 30 em 30 min (Das 08:00 às 20:00)
-const gerarHorariosDisponiveis = () => {
-    const horarios = [];
-    for (let i = 8; i <= 20; i++) {
-        const hora = i.toString().padStart(2, '0');
-        horarios.push(`${hora}:00`);
-        horarios.push(`${hora}:30`);
-    }
-    return horarios;
-};
-
 export function MeusAgendamentos() {
     const navigate = useNavigate();
     const clienteId = localStorage.getItem('usuarioId');
@@ -37,16 +25,61 @@ export function MeusAgendamentos() {
     const [servicos, setServicos] = useState<ServicoDTO[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // 👇 SEPARAMOS DATA E HORA AQUI NO ESTADO
     const [form, setForm] = useState({ data: '', hora: '', barbeiroId: '', servicoId: '' });
+
+    const [horariosDisponiveis, setHorariosDisponiveis] = useState<string[]>([]);
 
     useEffect(() => {
         if (!clienteId) {
-            navigate('/'); // Se não tiver ID, chuta pro login
+            navigate('/');
             return;
         }
         carregarDados();
     }, []);
+
+    useEffect(() => {
+        if (form.data) {
+            const horarios = calcularHorarios(form.data);
+            setHorariosDisponiveis(horarios);
+            // Se a data mudou, limpamos a hora antiga para ele escolher de novo
+            setForm(prev => ({ ...prev, hora: '' }));
+        } else {
+            setHorariosDisponiveis([]);
+        }
+    }, [form.data]);
+
+    const calcularHorarios = (dataEscolhida: string) => {
+        const horariosBase = [];
+
+        for (let i = 8; i <= 20; i++) {
+            const hora = i.toString().padStart(2, '0');
+            horariosBase.push(`${hora}:00`);
+            horariosBase.push(`${hora}:30`);
+        }
+
+        const hoje = new Date();
+        const [ano, mes, dia] = dataEscolhida.split('-').map(Number);
+
+        const isHoje = hoje.getFullYear() === ano && (hoje.getMonth() + 1) === mes && hoje.getDate() === dia;
+
+        if (isHoje) {
+
+            const horaAtual = hoje.getHours();
+            const minutoAtual = hoje.getMinutes();
+
+            return horariosBase.filter(h => {
+                const [hStr, mStr] = h.split(':');
+                const hNum = Number(hStr);
+                const mNum = Number(mStr);
+
+                if (hNum > horaAtual) return true;
+                if (hNum === horaAtual && mNum > minutoAtual) return true;
+                return false;
+            });
+        }
+
+        return horariosBase;
+    };
 
     const carregarDados = async () => {
         setLoading(true);
@@ -60,8 +93,7 @@ export function MeusAgendamentos() {
             setMeusAgendamentos(resAgendamentos.data);
             setServicos(resServicos.data);
 
-            // Filtra para exibir apenas os profissionais ativos
-            const profs = resUsuarios.data.filter(u => u.ativo !== false && (u.tipoUsuario === 'BARBEIRO' || u.tipoUsuario === 'ADMINISTRADOR'));
+            const profs = resUsuarios.data.filter(u => u.ativo !== false && u.tipoUsuario === 'BARBEIRO');
             setBarbeiros(profs);
         } catch (err) {
             alert('Erro ao carregar seus dados.');
@@ -73,20 +105,20 @@ export function MeusAgendamentos() {
     const handleAgendar = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // 👇 Juntamos a Data e a Hora exata que o Spring Boot espera (YYYY-MM-DDTHH:mm:00)
+            // Junta Data e Hora no formato universal do Java (ISO)
             const dataHoraCompleta = `${form.data}T${form.hora}:00`;
 
             const payload = {
                 horaInicial: dataHoraCompleta,
-                clienteId: Number(clienteId), // O ID do cliente vai oculto, com base no login dele!
+                clienteId: Number(clienteId),
                 barbeiroId: Number(form.barbeiroId),
                 servicoId: Number(form.servicoId)
             };
 
             await api.post('/agendamentos', payload);
             alert("✅ Horário marcado com sucesso!");
-            setForm({ data: '', hora: '', barbeiroId: '', servicoId: '' }); // Limpa
-            carregarDados(); // Recarrega o histórico
+            setForm({ data: '', hora: '', barbeiroId: '', servicoId: '' });
+            carregarDados();
         } catch (err: any) {
             alert(`❌ Erro ao agendar:\n${err.response?.data || 'Verifique os dados'}`);
         }
@@ -104,6 +136,12 @@ export function MeusAgendamentos() {
 
     const formatarData = (dataIso: string) => {
         return new Date(dataIso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    };
+
+    // Bloqueia clicar em dias passados no calendário
+    const getDataMinima = () => {
+        const tzOffset = (new Date()).getTimezoneOffset() * 60000;
+        return (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
     };
 
     const renderizarStatus = (status: string) => {
@@ -127,36 +165,33 @@ export function MeusAgendamentos() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                {/* COLUNA ESQUERDA: Formulário de Agendamento */}
                 <div className="lg:col-span-1 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 h-fit">
-                    <img
-                        src={iconeCalendario}
-                        alt="Ícone de Calendário"
-                        className="w-8 h-8 mb-4 dark:brightness-0 dark:invert transition-all"
-                    />
+                    <img src={iconeCalendario} alt="Ícone de Calendário" className="w-8 h-8 mb-4 dark:brightness-0 dark:invert transition-all" />
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Marcar Horário</h2>
+
                     <form onSubmit={handleAgendar} className="flex flex-col gap-4">
 
-                        {/* 👇 AQUI ESTÃO OS CAMPOS DE DATA E HORA SEPARADOS! */}
+                        {/* 👇 A ARQUITETURA VISUAL: Data e Hora agrupados e limpos */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Escolha a Data e Hora</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data e Hora do Corte</label>
                             <div className="flex gap-2">
                                 <input
                                     required
                                     type="date"
-                                    min={new Date().toISOString().split('T')[0]} // Bloqueia passado
+                                    min={getDataMinima()} // Trava os dias passados
                                     value={form.data}
                                     onChange={e => setForm({...form, data: e.target.value})}
-                                    className="w-2/3 p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-[55%] p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                                 <select
                                     required
+                                    disabled={!form.data} // Só deixa escolher a hora DEPOIS de escolher o dia
                                     value={form.hora}
                                     onChange={e => setForm({...form, hora: e.target.value})}
-                                    className="w-1/3 p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-[45%] p-2.5 border rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <option value="" disabled>Hora</option>
-                                    {gerarHorariosDisponiveis().map(h => <option key={h} value={h}>{h}</option>)}
+                                    <option value="" disabled>{form.data ? 'Horário' : 'Selecione o dia'}</option>
+                                    {horariosDisponiveis.map(h => <option key={h} value={h}>{h}</option>)}
                                 </select>
                             </div>
                         </div>
@@ -201,7 +236,6 @@ export function MeusAgendamentos() {
                                         <p className="text-sm text-gray-500">Com {ag.barbeiroNome}</p>
                                     </div>
 
-                                    {/* O Cliente só pode cancelar se ainda estiver Pendente ou Confirmado */}
                                     {(ag.statusServico === 'PENDENTE' || ag.statusServico === 'CONFIRMADO') && (
                                         <button onClick={() => handleCancelar(ag.id)} className="w-full sm:w-auto px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors">
                                             Cancelar Horário
